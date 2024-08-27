@@ -1,10 +1,17 @@
-# Version JDK8
-
+# Use an appropriate base image
 FROM ubuntu:20.04
-MAINTAINER Deepika Srinivasan, deepikasrinivasan92@gmail.com
 
-# Install dependencies
-RUN apt-get update && apt-get install -y openjdk-8-jdk wget git maven
+# Set environment variables to avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Set the timezone
+RUN apt-get update && \
+    apt-get install -y tzdata && \
+    cp /usr/share/zoneinfo/Your/Timezone /etc/localtime && \
+    echo "Your/Timezone" > /etc/timezone
+
+# Install necessary packages
+RUN apt-get install -y openjdk-8-jdk wget git maven
 
 # Create users and groups
 RUN groupadd tomcat
