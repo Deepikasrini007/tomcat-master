@@ -1,10 +1,10 @@
 # Version JDK8
 
-FROM centos:7
+FROM ubuntu:20.04
 MAINTAINER Deepika Srinivasan, deepikasrinivasan92@gmail.com
 
 # Install dependencies
-RUN yum install -y java-1.8.0-openjdk-devel wget git maven
+RUN apt-get update && apt-get install -y openjdk-8-jdk wget git maven
 
 # Create users and groups
 RUN groupadd tomcat
