@@ -1,10 +1,10 @@
 # Version JDK8
 
-FROM openjdk:8-jdk
-MAINTAINER Gaurav Agarwal, bharatmicrosystems@gmail.com
+FROM centos:7
+MAINTAINER Deepika Srinivasan, deepikasrinivasan92@gmail.com
 
-# Install required packages: wget, git, maven
-RUN apt-get update && apt-get install -y wget git maven
+# Install dependencies
+RUN yum install -y java-1.8.0-openjdk-devel wget git maven
 
 # Create users and groups
 RUN groupadd tomcat
@@ -23,16 +23,20 @@ RUN chgrp -R tomcat /opt/tomcat/lib
 RUN chmod g+rwx /opt/tomcat/bin
 RUN chmod g+r /opt/tomcat/bin/*
 
-# Clean up the default webapps and deploy your custom application
+# Remove default web applications and set up your own
 RUN rm -rf /opt/tomcat/webapps/*
 RUN cd /tmp && git clone https://github.com/DEV3L/java-mvn-hello-world-web-app.git
 RUN cd /tmp/java-mvn-hello-world-web-app && mvn clean install
 RUN cp /tmp/java-mvn-hello-world-web-app/target/mvn-hello-world.war /opt/tomcat/webapps/ROOT.war
 RUN chmod 777 /opt/tomcat/webapps/ROOT.war
 
-# Set volume and expose port
+# Inspect web.xml (optional, remove in production)
+RUN ls -l /opt/tomcat/webapps/ROOT/WEB-INF
+RUN cat /opt/tomcat/webapps/ROOT/WEB-INF/web.xml
+
+# Update web.xml (optional, replace with your version if needed)
+# COPY path/to/your/local/web.xml /opt/tomcat/webapps/ROOT/WEB-INF/web.xml
+
 VOLUME /opt/tomcat/webapps
 EXPOSE 8080
-
-# Start Tomcat
 CMD ["/opt/tomcat/bin/catalina.sh", "run"]
