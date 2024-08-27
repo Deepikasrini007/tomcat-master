@@ -1,32 +1,38 @@
-# Use the official Ubuntu base image
-FROM ubuntu:20.04
+# Version JDK8
 
-# Set environment variable to disable interactive prompts
-ENV DEBIAN_FRONTEND=noninteractive
+FROM openjdk:8-jdk
+MAINTAINER Deepika Srinivasan, Deepikasrinivasan92@gmail.com
 
-# Update package list and install tzdata for timezone configuration
-RUN apt-get update && \
-    apt-get install -y tzdata && \
-    # Replace 'Asia/Kolkata' with your desired timezone
-    cp /usr/share/zoneinfo/Asia/Kolkata /etc/localtime && \
-    echo "Asia/Kolkata" > /etc/timezone && \
-    # Clean up to reduce image size
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Install required packages: wget, git, maven
+RUN apt-get update && apt-get install -y wget git maven
 
-# Additional Dockerfile instructions go here
+# Create users and groups
+RUN groupadd tomcat
+RUN mkdir /opt/tomcat
+RUN useradd -s /bin/nologin -g tomcat -d /opt/tomcat tomcat
 
-# Example: Install other dependencies or copy application files
-# RUN apt-get install -y <other-packages>
+# Download and install Tomcat
+RUN wget https://archive.apache.org/dist/tomcat/tomcat-8/v8.5.54/bin/apache-tomcat-8.5.54.tar.gz
+RUN tar -zxvf apache-tomcat-8.5.54.tar.gz -C /opt/tomcat --strip-components=1
+RUN chgrp -R tomcat /opt/tomcat/conf
+RUN chmod g+rwx /opt/tomcat/conf
+RUN chmod g+r /opt/tomcat/conf/*
+RUN chown -R tomcat /opt/tomcat/logs/ /opt/tomcat/temp/ /opt/tomcat/webapps/ /opt/tomcat/work/
+RUN chgrp -R tomcat /opt/tomcat/bin
+RUN chgrp -R tomcat /opt/tomcat/lib
+RUN chmod g+rwx /opt/tomcat/bin
+RUN chmod g+r /opt/tomcat/bin/*
 
-# Example: Copy application files
-# COPY . /app
+# Clean up the default webapps and deploy your custom application
+RUN rm -rf /opt/tomcat/webapps/*
+RUN cd /tmp && git clone https://github.com/DEV3L/java-mvn-hello-world-web-app.git
+RUN cd /tmp/java-mvn-hello-world-web-app && mvn clean install
+RUN cp /tmp/java-mvn-hello-world-web-app/target/mvn-hello-world.war /opt/tomcat/webapps/ROOT.war
+RUN chmod 777 /opt/tomcat/webapps/ROOT.war
 
-# Example: Set working directory
-# WORKDIR /app
+# Set volume and expose port
+VOLUME /opt/tomcat/webapps
+EXPOSE 8080
 
-# Example: Expose port (if needed)
-# EXPOSE 8080
-
-# Example: Command to run your application
-# CMD ["your-command"]
+# Start Tomcat
+CMD ["/opt/tomcat/bin/catalina.sh", "run"]
